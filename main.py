@@ -12,6 +12,13 @@ def clients():
     # print('returned value:', all_clients)
     all_clients = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     all_clients, err = all_clients.communicate()
+    all_clients = all_clients.split('\n')
+    for client in all_clients[:-1]:
+        # if 'enp2s0' not in client:
+        ip_string = client.split(' ')
+        print(ip_string[1])
+        # print('\n')
+    # print(result)
     # print(request.remote_addr)
     # print(request.headers['X_REAL_IP'])
     # print(request.environ)
