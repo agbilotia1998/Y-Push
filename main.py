@@ -1,24 +1,25 @@
-import subprocess
-from flask import Flask
-from flask import request
+import netifaces
+import nmap
 from flask import jsonify
+from flask import Flask
+
 
 app = Flask(__name__)
 
 
 @app.route('/api/clients')
 def clients():
-    cmd = "arp -a"
+    # cmd = "arp -a"
     # all_clients = subprocess.call(cmd)  # returns the exit code in unix
     # print('returned value:', all_clients)
-    all_clients = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    all_clients, err = all_clients.communicate()
-    all_clients = all_clients.split('\n')
+    # all_clients = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # all_clients, err = all_clients.communicate()
+    # all_clients = all_clients.split('\n')
     client_ips = []
-    for client in all_clients[:-1]:
-        if 'wlp3s0' in client and 'incomplete' not in client:
-            ip_string = client.split(' ')
-            client_ips.append(ip_string[1])
+    # for client in all_clients[:-1]:
+    #     if 'wlp3s0' in client and 'incomplete' not in client:
+    #         ip_string = client.split(' ')
+    #         client_ips.append(ip_string[1])
         # print(ip_string[1])
         # print('\n')
     # print(result)
@@ -29,7 +30,26 @@ def clients():
     #     print(request.environ['REMOTE_ADDR'])
     # else:
     #     print(request.environ['HTTP_X_FORWARDED_FOR'])  # if behind a proxy
+    # return jsonify(client_ips)
+    ip = netifaces.ifaddresses('wlp3s0')[netifaces.AF_INET][0]['addr']
+    mask = netifaces.ifaddresses('wlp3s0')[2][0]['netmask']
+    binary_mask = ''.join(list(map(lambda x: bin(int(x))[2:], mask.split('.'))))
+    bits = binary_mask.count('1')
+
+    nm = nmap.PortScanner()
+    nm.scan(hosts=ip+'/'+str(bits), arguments='-sn')
+    hosts_list  = [(x, nm[x]['status']['state']) for x in nm.all_hosts()]
+    for host, status in hosts_list:
+        print(host, status)
+        client_ips.append(host)
+
+    client_ips.remove(ip)
     return jsonify(client_ips)
+    # print(ip)
+    # print(bits)
+
+    return 'as'
+
 
 
 if __name__ == "__main__":
