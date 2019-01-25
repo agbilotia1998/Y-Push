@@ -1,6 +1,7 @@
 import subprocess
 from flask import Flask
 from flask import request
+from flask import jsonify
 
 app = Flask(__name__)
 
@@ -13,10 +14,12 @@ def clients():
     all_clients = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     all_clients, err = all_clients.communicate()
     all_clients = all_clients.split('\n')
+    client_ips = []
     for client in all_clients[:-1]:
-        # if 'enp2s0' not in client:
-        ip_string = client.split(' ')
-        print(ip_string[1])
+        if 'wlp3s0' in client and 'incomplete' not in client:
+            ip_string = client.split(' ')
+            client_ips.append(ip_string[1])
+        # print(ip_string[1])
         # print('\n')
     # print(result)
     # print(request.remote_addr)
@@ -26,7 +29,7 @@ def clients():
     #     print(request.environ['REMOTE_ADDR'])
     # else:
     #     print(request.environ['HTTP_X_FORWARDED_FOR'])  # if behind a proxy
-    return all_clients
+    return jsonify(client_ips)
 
 
 if __name__ == "__main__":
