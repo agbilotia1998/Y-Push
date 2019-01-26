@@ -27,6 +27,12 @@ var dataSchema = new mongoose.Schema({
 });
 var dataDb = mongoose.model("data", dataSchema);
 
+let uniqueEndpointSchema = new mongoose.Schema({
+  privateIp: String,
+  uniqueEndpoint: String
+});
+let endpointDb = mongoose.model("localEnd", uniqueEndpointSchema);
+
 app.post('/send', function (req, res) {
   request.get({url: 'http://097490a0.ngrok.io/api/clients'}, function(err, response, body) {
     var addresses = JSON.parse(response.body);
@@ -65,6 +71,25 @@ app.post('/send', function (req, res) {
     // dataDb.create(data);
     res.send('Hey there');
   });
+});
+
+app.post('/save-endpoint', (req, res) => {
+  let data = req.body;
+
+  endpointDb.update(
+    { uniqueEndpoint: data.uniqueEndpoint },
+    { uniqueEndpoint: data.uniqueEndpoint, privateIp: data.privateIp },
+    { upsert: true },
+    (err, raw) => {
+      if (err) {
+        console.error(err);
+
+        res.status(500).send(err);
+      } else {
+        res.status(200).send(raw);
+      }
+    }
+  );
 });
 
 app.listen(7000, function () {
