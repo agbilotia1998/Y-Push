@@ -1,11 +1,11 @@
-var app = require('express')();
-var mongoose = require('mongoose');
-var bodyParser = require('body-parser');
-var cookieParser  = require('cookie-parser');
-var Schema = mongoose.Schema;
-var dbUrl = 'mongodb://localhost/ypush';
-var request = require('request');
-var cors = require('cors');
+let app = require('express')();
+let mongoose = require('mongoose');
+let bodyParser = require('body-parser');
+let cookieParser  = require('cookie-parser');
+let Schema = mongoose.Schema;
+let dbUrl = 'mongodb://localhost/ypush';
+let request = require('request');
+let cors = require('cors');
 const webpush = require('web-push');
 
 const vapidKeys = {
@@ -33,14 +33,20 @@ mongoose.connect(dbUrl, function (err, resp) {
   }
 });
 
-var messageSchema = new mongoose.Schema({
+let messageSchema = new mongoose.Schema({
   message: String
 });
-var dataSchema = new mongoose.Schema({
+let dataSchema = new mongoose.Schema({
   address: String,
   notifications: [messageSchema]
 });
-var dataDb = mongoose.model("data", dataSchema);
+let networkCredsSchema = new mongoose.Schema({
+  networkIp: String,
+  username: String,
+  password: String
+});
+let dataDb = mongoose.model("data", dataSchema);
+let creds = mongoose.model("cred", networkCredsSchema);
 
 let uniqueEndpointSchema = new mongoose.Schema({
   privateIp: String,
@@ -54,20 +60,36 @@ const sendNotification = (subscription, dataToSend='') => {
   }).catch((err) => {
     console.log(err)
   })
-}
+};
+
+app.post('/login', function (req, response) {
+  //req.body = JSON.parse(req.body);
+  console.log(req.body);
+  creds.findOne({username:req.body.username}, function(err,res) {
+    if(err || (!res)) {
+      response.status(403).send('Unauthorized');
+    } else {
+      if (res.password === req.body.password) {
+        response.status(200).send(JSON.stringify({IP: res.networkIp}));
+      } else {
+        response.status(403).send('Unauthorized');
+      }
+    }
+  })
+});
 
 app.post('/send', function (req, res) {
   request.get({url: 'http://097490a0.ngrok.io/api/clients'}, function(err, response, body) {
-    var addresses = JSON.parse(response.body);
-    var data  = req.body;
-    var message = data.message;
+    let addresses = JSON.parse(response.body);
+    let data  = req.body;
+    let message = data.message;
 
     console.log(addresses);
     addresses.forEach(function(address) {
       dataDb.find({address: address}, function (err, currentAddress) {
         if (!err) {
           if (currentAddress.length === 0) {
-            var data = {
+            let data = {
               address: address,
               notifications: [{message: message}]
             };
