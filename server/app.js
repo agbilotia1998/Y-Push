@@ -5,10 +5,12 @@ var cookieParser  = require('cookie-parser');
 var Schema = mongoose.Schema;
 var dbUrl = 'mongodb://localhost/ypush';
 var request = require('request');
+var cors = require('cors');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(cors());
 mongoose.Promise = global.Promise;
 mongoose.connect(dbUrl, function (err, resp) {
   if(err) {
@@ -77,8 +79,8 @@ app.post('/save-endpoint', (req, res) => {
   let data = req.body;
 
   endpointDb.update(
-    { uniqueEndpoint: data.uniqueEndpoint },
-    { uniqueEndpoint: data.uniqueEndpoint, privateIp: data.privateIp },
+    { uniqueEndpoint: JSON.stringify(data.uniqueEndpoint) },
+    { uniqueEndpoint: JSON.stringify(data.uniqueEndpoint), privateIp: data.privateIp },
     { upsert: true },
     (err, raw) => {
       if (err) {
