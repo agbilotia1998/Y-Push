@@ -1,6 +1,6 @@
 import netifaces
 import nmap
-from flask import jsonify
+from flask import jsonify, make_response
 from flask import Flask
 
 
@@ -31,6 +31,7 @@ def clients():
     # else:
     #     print(request.environ['HTTP_X_FORWARDED_FOR'])  # if behind a proxy
     # return jsonify(client_ips)
+
     ip = netifaces.ifaddresses('wlp3s0')[netifaces.AF_INET][0]['addr']
     mask = netifaces.ifaddresses('wlp3s0')[2][0]['netmask']
     binary_mask = ''.join(list(map(lambda x: bin(int(x))[2:], mask.split('.'))))
@@ -38,19 +39,17 @@ def clients():
 
     nm = nmap.PortScanner()
     nm.scan(hosts=ip+'/'+str(bits), arguments='-sn')
+
     hosts_list  = [(x, nm[x]['status']['state']) for x in nm.all_hosts()]
+
     for host, status in hosts_list:
         print(host, status)
         client_ips.append(host)
 
     client_ips.remove(ip)
-    return jsonify(client_ips)
-    # print(ip)
-    # print(bits)
 
-    return 'as'
-
+    return make_response(jsonify(client_ips)), 200
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
