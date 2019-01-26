@@ -15,6 +15,7 @@
     "express": "^4.16.4",
     "mongoose": "^5.4.6",
     "node-gcm": "^1.0.2",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "web-push": "^3.3.3"
   }
 }

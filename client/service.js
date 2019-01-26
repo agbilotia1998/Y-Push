@@ -40,13 +40,23 @@ const saveSubscription = async subscription => {
   }
 };
 
-self.addEventListener('push', function(event) {
+self.addEventListener("push", function(event) {
+  console.log(event);
   if (event.data) {
-    console.log('Push event!! ', event.data.text());
+    console.log("Push event!! ", event.data.text());
+    showLocalNotification("Yolo", event.data.text(),  self.registration);
   } else {
-    console.log('Push event but no data');
+    console.log("Push event but no data");
   }
-})
+});
+
+const showLocalNotification = (title, body, swRegistration) => {
+  const options = {
+    body
+    // here you can add more properties like icon, image, vibrate, etc.
+  };
+  swRegistration.showNotification(title, options);
+};
 
 self.addEventListener('activate', async () => {
   // This will be called only once when the service worker is activated.

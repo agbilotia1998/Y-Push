@@ -6,6 +6,19 @@ var Schema = mongoose.Schema;
 var dbUrl = 'mongodb://localhost/ypush';
 var request = require('request');
 var cors = require('cors');
+const webpush = require('web-push');
+
+const vapidKeys = {
+  publicKey:
+    'BBqQc40l8r6HT9olNa4QLXo8ZeHVFbi-AbDw7Tr_xsaX8xiir7qquYEW6l5WkMRdnuW_ZUCTQQzf1DjI3V87P54',
+  privateKey: 'exefig_wj-NSKetGjmtYDPVBtxga4i8qCcqKWk-wTv0',
+}
+
+webpush.setVapidDetails(
+  'mailto:hj.harshit007@gmail.com',
+  vapidKeys.publicKey,
+  vapidKeys.privateKey
+)
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
@@ -34,6 +47,14 @@ let uniqueEndpointSchema = new mongoose.Schema({
   uniqueEndpoint: String
 });
 let endpointDb = mongoose.model("localEnd", uniqueEndpointSchema);
+
+const sendNotification = (subscription, dataToSend='') => {
+  webpush.sendNotification(subscription, dataToSend).then((res) => {
+    console.log(res)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
 
 app.post('/send', function (req, res) {
   request.get({url: 'http://097490a0.ngrok.io/api/clients'}, function(err, response, body) {
@@ -93,6 +114,22 @@ app.post('/save-endpoint', (req, res) => {
     }
   );
 });
+
+app.get('/send-notification', (req, response) => {
+  const ip = "10.42.0.239";
+
+  endpointDb.findOne({ privateIp: ip }, (err, res) => {
+    if (err) {
+      response.status(500).send(err);
+    }
+
+    const subscription = JSON.parse(res.uniqueEndpoint);
+    console.log(subscription);
+    sendNotification(subscription, "Hello There!");
+
+    response.status(200).send("done");
+  })
+})
 
 app.listen(7000, function () {
   console.log('Server started');
